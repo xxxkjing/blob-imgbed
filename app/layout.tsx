@@ -2,8 +2,8 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 
 export const metadata = {
-  title: 'Vercel Blob Starter',
-  description: 'A simple Next.js app with Vercel Blob for image uploads',
+  title: 'Blob ImgBed',
+  description: '用Vercel Blob做的一个图床',
 }
 
 const inter = Inter({
