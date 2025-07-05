@@ -1,66 +1,75 @@
-import Image from 'next/image'
-import Link from 'next/link'
-import ExpandingArrow from '@/components/expanding-arrow'
-import Uploader from '@/components/uploader'
-import { Toaster } from '@/components/toaster'
+"use client"; // 标记为客户端组件
+
+// app/page.tsx
+import Uploader from '../components/uploader';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]); // 存储当前设备上传的图片 URL
+
+  // 从 localStorage 加载当前设备上传的图片
+  useEffect(() => {
+    const savedImages = localStorage.getItem('uploadedImages');
+    if (savedImages) {
+      setUploadedImages(JSON.parse(savedImages)); // 加载之前保存的图片
+    }
+  }, []);
+
+  // 处理上传成功的回调，保存到 localStorage
+  const handleUploadSuccess = (url: string) => {
+    setUploadedImages((prev) => {
+      const newImages = [...prev, url];
+      localStorage.setItem('uploadedImages', JSON.stringify(newImages));
+      return newImages;
+    });
+  };
+
+  // 处理图片删除，添加确认
+  const handleDeleteImage = (urlToDelete: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this image?');
+    if (confirmed) {
+      setUploadedImages((prev) => {
+        const newImages = prev.filter((url) => url !== urlToDelete);
+        localStorage.setItem('uploadedImages', JSON.stringify(newImages));
+        return newImages;
+      });
+    }
+  };
+
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center">
-      <Toaster />
-      <Link
-        href="https://vercel.com/templates/next.js/blob-starter"
-        className="group mt-20 sm:mt-0 rounded-full flex space-x-1 bg-white/30 shadow-sm ring-1 ring-gray-900/5 text-gray-600 text-sm font-medium px-10 py-2 hover:shadow-lg active:shadow-sm transition-all"
-      >
-        <p>Deploy your own to Vercel</p>
-        <ExpandingArrow />
-      </Link>
-      <h1 className="pt-4 pb-8 bg-gradient-to-br from-black via-[#171717] to-[#575757] bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl">
-        Blob on Vercel
+    <div className="container mx-auto p-6 bg-gradient-to-br from-gray-50 to-white min-h-screen">
+      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
+        Image Hosting Service
       </h1>
-      <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
-        <Uploader />
+      <Uploader onUploadSuccess={handleUploadSuccess} />
+      <h2 className="text-2xl font-semibold text-gray-800 mt-12 mb-6">Your Uploaded Images</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {uploadedImages.length > 0 ? (
+          uploadedImages.map((url, index) => (
+            <div
+              key={index}
+              className="relative overflow-hidden rounded-xl bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+            >
+              <img
+                src={url}
+                alt={`Uploaded Image ${index + 1}`}
+                className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
+              />
+              <button
+                onClick={() => handleDeleteImage(url)}
+                className="absolute top-2 right-2 bg-red-500/90 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-300"
+              >
+                <span className="text-lg">×</span>
+              </button>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12 bg-white/80 rounded-xl shadow-md">
+            <p className="text-gray-500 text-lg">No images uploaded yet.</p>
+            <p className="text-sm text-gray-400 mt-2">Start by uploading your first image!</p>
+          </div>
+        )}
       </div>
-      <p className="font-light text-gray-600 w-full max-w-lg text-center mt-6">
-        <Link
-          href="https://vercel.com/blob"
-          className="font-medium underline underline-offset-4 hover:text-black transition-colors"
-        >
-          Vercel Blob
-        </Link>{' '}
-        demo. Built with{' '}
-        <Link
-          href="https://nextjs.org/docs"
-          className="font-medium underline underline-offset-4 hover:text-black transition-colors"
-        >
-          Next.js App Router
-        </Link>
-        .
-      </p>
-      <div className="sm:absolute sm:bottom-0 w-full px-20 py-10 flex justify-between">
-        <Link href="https://vercel.com">
-          <Image
-            src="/vercel.svg"
-            alt="Vercel Logo"
-            width={100}
-            height={24}
-            priority
-          />
-        </Link>
-        <Link
-          href="https://github.com/vercel/examples/tree/main/storage/blob-starter"
-          className="flex items-center space-x-2"
-        >
-          <Image
-            src="/github.svg"
-            alt="GitHub Logo"
-            width={24}
-            height={24}
-            priority
-          />
-          <p className="font-light">Source</p>
-        </Link>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }

@@ -1,38 +1,34 @@
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
-import { NextResponse } from 'next/server'
+// app/api/upload/route.ts
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
+import { NextResponse } from 'next/server';
 
+// 处理文件上传请求
 export async function POST(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadBody
+  const body = (await request.json()) as HandleUploadBody;
 
   try {
+    // 使用 Vercel Blob 的 handleUpload 处理上传
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async () =>
-        // pathname
-        // clientPayload
-        {
-          // Generate a client token for the browser to upload the file
-          // ⚠️ Authenticate and authorize users before generating the token.
-          // Otherwise, you're allowing anonymous uploads.
-          return {
-            allowedContentTypes: ['image/*'],
-            maximumSizeInBytes: 50 * 1024 * 1024, // 50MB
-          }
-        },
+      onBeforeGenerateToken: async () => ({
+        // 定义上传限制
+        allowedContentTypes: ['image/*'], // 仅接受图片类型
+        maximumSizeInBytes: 50 * 1024 * 1024, // 最大 50MB
+      }),
       onUploadCompleted: async ({ blob, tokenPayload }) => {
-        // Get notified of client upload completion
-        // ⚠️ This will not work during development (localhost),
-        // Unless you use ngrok or a similar service to expose and test your local server
-        console.log('blob upload completed', blob, tokenPayload)
+        // 上传完成后的回调，记录日志
+        console.log('Blob upload completed:', blob.url, tokenPayload);
       },
-    })
+    });
 
-    return NextResponse.json(jsonResponse)
+    return NextResponse.json(jsonResponse); // 返回上传结果
   } catch (error) {
+    // 捕获并返回错误
+    console.error('Upload error:', (error as Error).message);
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 400 } // The webhook will retry 5 times waiting for a 200
-    )
+      { status: 400 }
+    );
   }
 }
